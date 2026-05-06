@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visa Premiere — Your brand's opening night</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #09090f;
+      color: #f0f0f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Picker ── */
+    #picker {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    .logo { font-size: 0.75rem; letter-spacing: 0.15em; color: #444; text-transform: uppercase; margin-bottom: 40px; }
+
+    h1 { font-size: 2.4rem; font-weight: 800; line-height: 1.15; margin-bottom: 10px; }
+    h1 span { background: linear-gradient(135deg, #a78bfa, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .tagline { color: #555; font-size: 0.95rem; margin-bottom: 44px; }
+
+    .section-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: #444; font-weight: 600; margin-bottom: 12px; }
+
+    /* Category pills */
+    .cat-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; }
+    .cat-pill {
+      display: flex; align-items: center; gap: 7px;
+      background: #111118; border: 1.5px solid #2a2a3e;
+      border-radius: 50px; padding: 9px 16px;
+      font-size: 0.9rem; font-weight: 500; color: #d4d4d8;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .cat-pill:hover { border-color: #a78bfa; color: #f0f0f0; }
+    .cat-pill.active { border-color: #a78bfa; background: #160f2a; color: #c4b5fd; }
+
+    /* Keyword chips */
+    #keywordWrap { min-height: 52px; margin-bottom: 28px; }
+    .kw-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kw-chip {
+      background: #111118; border: 1.5px solid #2a2a3e;
+      border-radius: 50px; padding: 7px 14px;
+      font-size: 0.88rem; font-weight: 500; color: #d4d4d8;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .kw-chip:hover { border-color: #60a5fa; color: #f0f0f0; }
+    .kw-chip.active { border-color: #60a5fa; background: #0f1a2a; color: #93c5fd; }
+
+    /* Brand name input */
+    .brand-input-wrap { margin-bottom: 36px; }
+    #brandInput {
+      width: 100%; background: #111118; border: 1.5px solid #1e1e2e;
+      border-radius: 12px; padding: 13px 16px; color: #f0f0f0;
+      font-size: 0.95rem; font-family: inherit;
+      transition: border-color 0.15s; outline: none;
+    }
+    #brandInput::placeholder { color: #333; }
+    #brandInput:focus { border-color: #a78bfa; }
+
+    /* Generate button */
+    #genBtn {
+      width: 100%; padding: 17px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.02em;
+    }
+    #genBtn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.92; }
+    #genBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Loading ── */
+    #loading {
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; gap: 28px; padding: 40px;
+    }
+    .loader-brand { font-size: 1rem; font-weight: 700; color: #555; letter-spacing: 0.05em; }
+    .steps { display: flex; flex-direction: column; gap: 10px; width: 300px; }
+    .step { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #333; transition: color 0.4s; }
+    .step.active { color: #a78bfa; }
+    .step.done { color: #34d399; }
+    .step-icon { font-size: 1rem; width: 20px; text-align: center; }
+    .spinner {
+      width: 48px; height: 48px; border: 3px solid #1e1e2e;
+      border-top-color: #a78bfa; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Moodboard ── */
+    #moodboard { display: none; }
+
+    .mb-header {
+      padding: 32px 32px 0;
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    }
+    .mb-brand { font-size: 1.8rem; font-weight: 800; }
+    .mb-category { font-size: 0.8rem; color: #555; text-transform: uppercase; letter-spacing: 0.1em; }
+    .mb-keywords { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+    .mb-kw { background: #111118; border: 1px solid #1e1e2e; border-radius: 50px; padding: 4px 10px; font-size: 0.7rem; color: #888; }
+
+    .mb-grid {
+      max-width: 1100px; margin: 24px auto 0; padding: 0 32px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 12px;
+    }
+
+    .mb-img-hero { grid-column: 1 / -1; border-radius: 16px; overflow: hidden; aspect-ratio: 16/7; }
+    .mb-img-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mb-img-side { border-radius: 16px; overflow: hidden; aspect-ratio: 4/3; }
+    .mb-img-side img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .mb-meta {
+      max-width: 1100px; margin: 20px auto 0; padding: 0 32px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+
+    .mb-palette {
+      background: #111118; border: 1px solid #1e1e2e;
+      border-radius: 16px; padding: 20px;
+    }
+    .palette-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: #444; margin-bottom: 14px; font-weight: 600; }
+    .swatches { display: flex; gap: 8px; }
+    .swatch {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.06);
+      transition: transform 0.15s;
+    }
+    .swatch:hover { transform: scale(1.15); }
+
+    .mb-audio {
+      background: #111118; border: 1px solid #1e1e2e;
+      border-radius: 16px; padding: 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .audio-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: #444; font-weight: 600; }
+    #audioPlayer { width: 100%; }
+
+    .mb-cta {
+      max-width: 1100px; margin: 20px auto 40px; padding: 0 32px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .cost-note { font-size: 0.8rem; color: #444; }
+    .cost-note span { color: #34d399; }
+
+    #buildBtn {
+      margin-left: auto;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border: none; padding: 15px 36px;
+      border-radius: 50px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+    }
+    #buildBtn:hover { transform: translateY(-1px); opacity: 0.9; }
+    #startOverBtn, #notVibeBtn {
+      background: transparent; color: #555; border: 1.5px solid #1e1e2e;
+      padding: 14px 24px; border-radius: 50px; font-size: 0.9rem;
+      cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    }
+    #startOverBtn:hover { color: #aaa; border-color: #333; }
+    #notVibeBtn { color: #a78bfa; border-color: #3b2f5e; }
+    #notVibeBtn:hover { background: #160f2a; border-color: #a78bfa; }
+    #notVibeBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .vibe-limit {
+      width: 100%; text-align: center; font-size: 0.85rem; color: #555;
+      padding: 12px; background: #111118; border: 1px solid #1e1e2e;
+      border-radius: 12px; display: none;
+    }
+
+    /* Live URL banner */
+    #liveUrlBanner {
+      display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: #0d1f14; border: 1px solid #166534;
+      border-radius: 12px; padding: 14px 20px;
+    }
+    #liveUrlBanner span { font-size: 0.8rem; color: #4ade80; font-weight: 600; }
+    #liveUrlBanner a {
+      color: #86efac; font-size: 0.85rem; text-decoration: none;
+      border-bottom: 1px solid rgba(134,239,172,0.3);
+    }
+    #liveUrlBanner a:hover { color: #4ade80; }
+
+    /* ── Site Builder ── */
+    #builder { display: none; flex-direction: column; height: 100vh; }
+
+    .builder-bar {
+      background: #111118; border-bottom: 1px solid #1e1e2e;
+      padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+    }
+    .builder-bar h2 { font-size: 0.95rem; font-weight: 700; flex: 1; }
+    .builder-status { font-size: 0.8rem; color: #555; }
+
+    #dlBtn {
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff; border: none; padding: 9px 20px;
+      border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s; display: none;
+    }
+    #dlBtn:hover { opacity: 0.85; }
+
+    #backBtn {
+      background: transparent; color: #555; border: 1.5px solid #1e1e2e;
+      padding: 8px 16px; border-radius: 8px; font-size: 0.85rem;
+      cursor: pointer; transition: color 0.15s;
+    }
+    #backBtn:hover { color: #aaa; }
+
+    #builderLoading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; flex: 1; gap: 16px; color: #555;
+    }
+    #builderLoading p { font-size: 0.9rem; }
+
+    #siteFrame {
+      flex: 1; border: none; display: none;
+      background: #fff;
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 1.7rem; }
+      .mb-grid { grid-template-columns: 1fr; }
+      .mb-img-hero { grid-column: 1; }
+      .mb-meta { grid-template-columns: 1fr; }
+      .mb-cta { flex-direction: column; align-items: stretch; }
+      #buildBtn { margin-left: 0; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Picker ── -->
+<div id="picker">
+  <div class="logo">Visa CLI · Brand Studio</div>
+  <h1>Your brand's<br><span>opening night.</span></h1>
+  <p class="tagline">Pick a vibe, generate your moodboard, and deploy your landing page in one click.</p>
+
+  <div class="section-label">Category</div>
+  <div class="cat-pills" id="catPills"></div>
+
+  <div class="section-label">Aesthetic</div>
+  <div id="keywordWrap">
+    <p style="color:#333;font-size:0.85rem">← Select a category first</p>
+  </div>
+
+  <div class="section-label">Brand Name <span style="color:#333;font-weight:400">(optional)</span></div>
+  <div class="brand-input-wrap">
+    <input id="brandInput" type="text" placeholder="e.g. Lumina, Vaultx, Bloom..." maxlength="40" />
+  </div>
+
+  <button id="genBtn" disabled>Generate Moodboard 🎬</button>
+</div>
+
+<!-- ── Loading ── -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loader-brand" id="loaderLabel">Generating your brand assets…</div>
+  <div class="steps">
+    <div class="step" id="s1"><span class="step-icon">🖼️</span> Hero scene image</div>
+    <div class="step" id="s2"><span class="step-icon">📸</span> Lifestyle image</div>
+    <div class="step" id="s3"><span class="step-icon">🎨</span> Texture &amp; pattern</div>
+    <div class="step" id="s4"><span class="step-icon">🎵</span> Brand soundtrack</div>
+  </div>
+</div>
+
+<!-- ── Moodboard ── -->
+<div id="moodboard">
+  <div class="mb-header">
+    <div>
+      <div class="mb-category" id="mbCategory"></div>
+      <div class="mb-brand" id="mbBrand"></div>
+    </div>
+    <div class="mb-keywords" id="mbKeywords"></div>
+  </div>
+
+  <div class="mb-grid">
+    <div class="mb-img-hero"><img id="imgHero" src="" alt="Hero scene" crossorigin="anonymous" loading="lazy" /></div>
+    <div class="mb-img-side"><img id="imgLifestyle" src="" alt="Lifestyle" crossorigin="anonymous" loading="lazy" /></div>
+    <div class="mb-img-side"><img id="imgTexture" src="" alt="Texture" crossorigin="anonymous" loading="lazy" /></div>
+  </div>
+
+  <div class="mb-meta">
+    <div class="mb-palette">
+      <div class="palette-label">Brand Palette</div>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="mb-audio">
+      <div class="audio-label">Brand Soundtrack</div>
+      <audio id="audioPlayer" controls></audio>
+    </div>
+  </div>
+
+  <div class="mb-cta">
+    <div class="cost-note">Moodboard cost: <span>$0.22</span></div>
+    <button id="startOverBtn">← Start Over</button>
+    <button id="notVibeBtn">Not My Vibe 🔄</button>
+    <div class="vibe-limit" id="vibeLimit">You've seen 3 versions — try picking different keywords or a new category.</div>
+    <button id="buildBtn">Premiere Your Site 🎬</button>
+  </div>
+
+  <div class="mb-cta" id="liveUrlBanner">
+    <span>🚀 Live</span>
+    <a id="liveUrlLink" href="#" target="_blank" rel="noopener"></a>
+  </div>
+</div>
+
+<!-- ── Site Builder ── -->
+<div id="builder">
+  <div class="builder-bar">
+    <button id="backBtn">← Back</button>
+    <h2 id="builderTitle">Building your site…</h2>
+    <span class="builder-status" id="builderStatus"></span>
+    <button id="dlBtn">⬇ Download HTML</button>
+  </div>
+  <div id="builderLoading">
+    <div class="spinner"></div>
+    <p>Claude is designing your landing page…</p>
+  </div>
+  <iframe id="siteFrame" title="Generated Site Preview"></iframe>
+</div>
+
+<script>
+// ── Data ────────────────────────────────────────────────────────────────────
+
+const KEYWORDS = {
+  fashion:  ['Minimal','Luxury','Streetwear','Vintage','Bold'],
+  beauty:   ['Clean','Ethereal','Clinical','Lush','Radiant'],
+  foodbev:  ['Artisan','Fresh','Indulgent','Earthy','Vibrant'],
+  techsaas: ['Sleek','Futuristic','Minimal','Bold','Human'],
+  music:    ['Raw','Dreamy','Hype','Underground','Iconic'],
+  crypto:   ['Cyber','Decentralized','Neon','Minimal','Bold'],
+  fitness:  ['Gritty','Clean','Athletic','Zen','Powerful'],
+  creative: ['Avant-Garde','Playful','Refined','Experimental','Bold'],
+};
+
+const CAT_LABELS = {
+  fashion:'Fashion / Apparel', beauty:'Beauty / Wellness', foodbev:'Food & Bev',
+  techsaas:'Tech / SaaS', music:'Music / Entertainment', crypto:'Crypto / Web3',
+  fitness:'Fitness / Health', creative:'Creative / Agency',
+};
+
+const CAT_ICONS = {
+  fashion:'👗', beauty:'✨', foodbev:'🍽️', techsaas:'💻',
+  music:'🎵', crypto:'⛓️', fitness:'💪', creative:'🎨',
+};
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+let state = { category: null, keywords: [], moodboardData: null, generatedHtml: null, vibeAttempts: 0 };
+
+// ── Picker setup ─────────────────────────────────────────────────────────────
+
+const catPills = document.getElementById('catPills');
+Object.keys(KEYWORDS).forEach(id => {
+  const pill = document.createElement('button');
+  pill.className = 'cat-pill';
+  pill.dataset.id = id;
+  pill.innerHTML = `<span>${CAT_ICONS[id]}</span> ${CAT_LABELS[id]}`;
+  pill.addEventListener('click', () => selectCategory(id));
+  catPills.appendChild(pill);
+});
+
+function selectCategory(id) {
+  state.category = id;
+  state.keywords = [];
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.id === id));
+
+  const wrap = document.getElementById('keywordWrap');
+  wrap.innerHTML = '<div class="kw-chips" id="kwChips"></div>';
+  const chips = document.getElementById('kwChips');
+  KEYWORDS[id].forEach(kw => {
+    const chip = document.createElement('button');
+    chip.className = 'kw-chip';
+    chip.textContent = kw;
+    chip.addEventListener('click', () => toggleKeyword(kw, chip));
+    chips.appendChild(chip);
+  });
+  updateBtn();
+}
+
+function toggleKeyword(kw, chip) {
+  if (state.keywords.includes(kw)) {
+    state.keywords = state.keywords.filter(k => k !== kw);
+    chip.classList.remove('active');
+  } else {
+    state.keywords.push(kw);
+    chip.classList.add('active');
+  }
+  updateBtn();
+}
+
+function updateBtn() {
+  const btn = document.getElementById('genBtn');
+  const ready = state.category && state.keywords.length > 0;
+  btn.disabled = !ready;
+  btn.textContent = ready ? `Generate ${CAT_ICONS[state.category]} Moodboard` : 'Choose a category & aesthetic';
+}
+
+document.getElementById('genBtn').addEventListener('click', generateMoodboard);
+document.getElementById('startOverBtn').addEventListener('click', startOver);
+document.getElementById('notVibeBtn').addEventListener('click', notMyVibe);
+document.getElementById('buildBtn').addEventListener('click', buildSite);
+document.getElementById('backBtn').addEventListener('click', () => show('moodboard'));
+document.getElementById('dlBtn').addEventListener('click', downloadSite);
+
+// ── Color extraction ─────────────────────────────────────────────────────────
+
+async function extractColors(imgEl, count = 2) {
+  await new Promise((res, rej) => {
+    if (imgEl.complete && imgEl.naturalWidth > 0) res();
+    else { imgEl.onload = res; imgEl.onerror = rej; }
+  });
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 50; canvas.height = 50;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(imgEl, 0, 0, 50, 50);
+    const data = ctx.getImageData(0, 0, 50, 50).data;
+    const buckets = {};
+    for (let i = 0; i < data.length; i += 4) {
+      const r = Math.round(data[i] / 32) * 32;
+      const g = Math.round(data[i+1] / 32) * 32;
+      const b = Math.round(data[i+2] / 32) * 32;
+      const k = `${r},${g},${b}`;
+      buckets[k] = (buckets[k] || 0) + 1;
+    }
+    return Object.entries(buckets)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, count)
+      .map(([k]) => {
+        const [r,g,b] = k.split(',').map(Number);
+        return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+      });
+  } catch { return ['#333333', '#666666']; }
+}
+
+// ── Not My Vibe ──────────────────────────────────────────────────────────────
+
+async function notMyVibe() {
+  state.vibeAttempts++;
+  const btn = document.getElementById('notVibeBtn');
+
+  if (state.vibeAttempts >= 3) {
+    btn.disabled = true;
+    btn.textContent = 'Not My Vibe 🔄';
+    document.getElementById('vibeLimit').style.display = 'block';
+    return;
+  }
+
+  btn.textContent = `Not My Vibe 🔄 (${state.vibeAttempts}/3)`;
+  await generateMoodboard(true);
+}
+
+// ── Generate moodboard ───────────────────────────────────────────────────────
+
+async function generateMoodboard(isRegen = false) {
+  const brandName = state.moodboardData?.brandName ?? document.getElementById('brandInput').value.trim();
+  show('loading');
+  document.getElementById('loaderLabel').textContent =
+    `${CAT_ICONS[state.category]} ${isRegen ? 'Finding a new vibe…' : 'Generating' + (brandName ? ' ' + brandName : '') + ' brand assets…'}`;
+  ['s1','s2','s3','s4'].forEach(id => setStep(id, 'active'));
+
+  try {
+    const res = await fetch('/api/moodboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: state.category, keywords: state.keywords, brandName }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    state.moodboardData = data;
+    showMoodboard(data);
+  } catch (err) {
+    alert('Generation failed: ' + err.message);
+    show('picker');
+  }
+}
+
+function setStep(id, cls) {
+  const el = document.getElementById(id);
+  el.classList.remove('active','done');
+  if (cls) el.classList.add(cls);
+}
+
+async function showMoodboard(data) {
+  document.getElementById('mbCategory').textContent = `${data.icon} ${data.category}`;
+  document.getElementById('mbBrand').textContent = data.brandName || 'Your Brand';
+  document.getElementById('mbKeywords').innerHTML = data.keywords.map(k => `<span class="mb-kw">${k}</span>`).join('');
+
+  const heroImg = document.getElementById('imgHero');
+  const lifestyleImg = document.getElementById('imgLifestyle');
+  const textureImg = document.getElementById('imgTexture');
+
+  heroImg.src = data.heroUrl;
+  lifestyleImg.src = data.lifestyleUrl;
+  textureImg.src = data.textureUrl;
+  document.getElementById('audioPlayer').src = data.musicUrl;
+
+  // Reset vibe UI
+  const notBtn = document.getElementById('notVibeBtn');
+  notBtn.disabled = state.vibeAttempts >= 3;
+  notBtn.textContent = state.vibeAttempts > 0 ? `Not My Vibe 🔄 (${state.vibeAttempts}/3)` : 'Not My Vibe 🔄';
+  document.getElementById('vibeLimit').style.display = state.vibeAttempts >= 3 ? 'block' : 'none';
+  document.getElementById('liveUrlBanner').style.display = 'none';
+
+  show('moodboard');
+
+  // Extract palette after images load
+  try {
+    const [c1, c2, c3] = await Promise.all([
+      extractColors(heroImg, 2),
+      extractColors(lifestyleImg, 2),
+      extractColors(textureImg, 2),
+    ]);
+    const colors = [...c1, ...c2, ...c3];
+    state.moodboardData.colors = colors;
+
+    const swatches = document.getElementById('swatches');
+    swatches.innerHTML = colors.map(c =>
+      `<div class="swatch" style="background:${c}" title="${c}"></div>`
+    ).join('');
+  } catch { state.moodboardData.colors = ['#333','#555','#777','#999','#aaa','#ccc']; }
+}
+
+// ── Build site ───────────────────────────────────────────────────────────────
+
+async function buildSite() {
+  show('builder');
+  document.getElementById('builderTitle').textContent = 'Building your site…';
+  document.getElementById('builderStatus').textContent = 'Claude is writing your landing page (~30s)';
+  document.getElementById('builderLoading').style.display = 'flex';
+  document.getElementById('siteFrame').style.display = 'none';
+  document.getElementById('dlBtn').style.display = 'none';
+
+  const d = state.moodboardData;
+
+  try {
+    const res = await fetch('/api/buildsite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: state.category,
+        keywords: d.keywords,
+        brandName: d.brandName,
+        heroUrl: d.heroUrl,
+        lifestyleUrl: d.lifestyleUrl,
+        textureUrl: d.textureUrl,
+        colors: d.colors || [],
+        musicUrl: d.musicUrl || '',
+      }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error);
+
+    state.generatedHtml = result.html;
+
+    // Show the generated site immediately
+    const frame = document.getElementById('siteFrame');
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open(); doc.write(result.html); doc.close();
+
+    document.getElementById('builderLoading').style.display = 'none';
+    frame.style.display = 'block';
+    document.getElementById('dlBtn').style.display = '';
+    document.getElementById('builderTitle').textContent = d.brandName || 'Your Brand';
+    document.getElementById('builderStatus').textContent = 'Deploying to Netlify…';
+
+    // Deploy to Netlify
+    try {
+      const deployRes = await fetch('/api/deploy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html: result.html, brandName: d.brandName }),
+      });
+      const deployData = await deployRes.json();
+      if (deployRes.ok && deployData.url) {
+        document.getElementById('builderStatus').textContent = '🚀 Live';
+        const link = document.getElementById('liveUrlLink');
+        link.href = deployData.url;
+        link.textContent = deployData.url;
+        document.getElementById('liveUrlBanner').style.display = 'flex';
+        // Also show on moodboard for when user goes back
+        state.liveUrl = deployData.url;
+      } else {
+        document.getElementById('builderStatus').textContent = 'Ready — set NETLIFY_TOKEN to deploy live';
+      }
+    } catch {
+      document.getElementById('builderStatus').textContent = 'Ready — set NETLIFY_TOKEN to deploy live';
+    }
+  } catch (err) {
+    alert('Site generation failed: ' + err.message);
+    show('moodboard');
+  }
+}
+
+function downloadSite() {
+  const blob = new Blob([state.generatedHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (state.moodboardData?.brandName || 'my-brand').toLowerCase().replace(/\s+/g,'-') + '-site.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function show(screen) {
+  ['picker','loading','moodboard','builder'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.display = id === screen ? (id === 'builder' ? 'flex' : 'block') : 'none';
+  });
+}
+
+function startOver() {
+  state = { category: null, keywords: [], moodboardData: null, generatedHtml: null, vibeAttempts: 0 };
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('keywordWrap').innerHTML = '<p style="color:#333;font-size:0.85rem">← Select a category first</p>';
+  document.getElementById('brandInput').value = '';
+  updateBtn();
+  show('picker');
+}
+
+show('picker');
+</script>
+</body>
+</html>
