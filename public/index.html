@@ -1555,8 +1555,12 @@ async function submitEnrollment() {
     document.getElementById('liveLink').href = data.url;
     document.getElementById('liveLink').textContent = data.url;
     const frame = document.getElementById('siteFrame');
-    const doc = frame.contentDocument;
-    doc.open(); doc.write(data.updatedHtml); doc.close();
+    try {
+      // contentDocument is null when iframe is cross-origin (after an edit-mode redeploy)
+      const doc = frame.contentDocument;
+      if (doc) { doc.open(); doc.write(data.updatedHtml); doc.close(); }
+      else { frame.src = data.url; }
+    } catch { frame.src = data.url; }
     document.getElementById('vaFormSection').style.display = 'none';
     document.getElementById('vaSuccess').style.display = 'block';
     document.getElementById('vaMerchantId').textContent = data.merchantId;

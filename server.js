@@ -300,15 +300,26 @@ async function deployToNetlify(html, brandName, siteId = null) {
   const zipBuffer = zip.toBuffer();
 
   if (siteId) {
-    const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/zip' },
-      body: zipBuffer,
-    });
-    const deploy = await deployRes.json();
-    const rawUrl = deploy.deploy_url || deploy.url;
-    if (!rawUrl) throw new Error(deploy.message || 'Redeploy failed');
-    return { url: rawUrl.replace(/^http:\/\//, 'https://'), siteId };
+    // Retry once after 6 s if Netlify returns 412 (deploy lock still held by prior deploy)
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/zip' },
+        body: zipBuffer,
+      });
+      if (deployRes.status === 412 && attempt === 0) {
+        await new Promise(r => setTimeout(r, 6000));
+        continue;
+      }
+      if (!deployRes.ok) {
+        const errText = await deployRes.text();
+        throw new Error(`Netlify ${deployRes.status}: ${errText.slice(0, 200)}`);
+      }
+      const deploy = await deployRes.json();
+      const rawUrl = deploy.deploy_url || deploy.url;
+      if (!rawUrl) throw new Error(deploy.message || 'Redeploy failed');
+      return { url: rawUrl.replace(/^http:\/\//, 'https://'), siteId };
+    }
   }
 
   const slug = (brandName || 'my-brand').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30);
