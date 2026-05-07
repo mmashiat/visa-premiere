@@ -5,7 +5,16 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHmac, createHash } from 'crypto';
+
+function xPayToken(secret, resourcePath, queryString = '', body = '') {
+  const timestamp = Date.now().toString();
+  const nonce     = randomUUID().replace(/-/g, '').slice(0, 10);
+  const bodyHash  = createHash('sha256').update(body).digest('hex');
+  const pre       = `${timestamp}${nonce}${resourcePath}${queryString}${bodyHash}`;
+  const hmac      = createHmac('sha256', secret || '').update(pre).digest('hex');
+  return `xv2:${timestamp}:${nonce}:${hmac}`;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -461,10 +470,11 @@ app.post('/api/visa-accept/enroll', async (req, res) => {
   const { brandName, businessType, country, email, siteHtml, siteId } = req.body;
   if (!siteHtml) return res.status(400).json({ error: 'siteHtml required' });
 
-  const COUNTRY_MAP = { US: 'USA', GB: 'GBR', CA: 'CAN', AU: 'AUS' };
-  const VA_API_KEY  = process.env.VISA_ACCEPT_API_KEY;
-  const VA_APP_ID   = process.env.VISA_ACCEPT_APP_ID;
-  const VA_BASE     = process.env.VISA_ACCEPT_BASE_URL || 'https://sandbox.api.visa.com';
+  const COUNTRY_MAP  = { US: 'USA', GB: 'GBR', CA: 'CAN', AU: 'AUS' };
+  const VA_API_KEY   = process.env.VISA_ACCEPT_API_KEY;
+  const VA_API_SECRET= process.env.VISA_ACCEPT_API_SECRET || '';
+  const VA_APP_ID    = process.env.VISA_ACCEPT_APP_ID;
+  const VA_BASE      = process.env.VISA_ACCEPT_BASE_URL || 'https://sandbox.api.visa.com';
 
   try {
     let merchantId;
@@ -476,38 +486,44 @@ app.post('/api/visa-accept/enroll', async (req, res) => {
         .trim()
         .slice(0, 25);
 
-      const enrollRes = await fetch(`${VA_BASE}/va/v1/apps/${VA_APP_ID}/sellers`, {
+      const resourcePath = `/va/v1/apps/${VA_APP_ID}/sellers`;
+      const reqBody = JSON.stringify({
+        locale: 'en-US',
+        country: COUNTRY_MAP[country] || 'USA',
+        customerId: randomUUID(),
+        enrollType: 'NEW',
+        sellerNameTag,
+        // Sandbox test card — swap for real tokenized panData in production
+        panData: {
+          panId: '055a183f-5506-c09e-cc81-1cf039a50c01',
+          accountNumber: 'x444111122223333',
+          expirationYear: '2028',
+          expirationMonth: '01',
+          vProvisionTokenId: '8ba8e0a913f6bb2c809e1459cdefdd02',
+        },
+      });
+
+      const enrollRes = await fetch(`${VA_BASE}${resourcePath}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'apikey': VA_API_KEY,
+          'x-pay-token': xPayToken(VA_API_SECRET, resourcePath, '', reqBody),
         },
-        body: JSON.stringify({
-          locale: 'en-US',
-          country: COUNTRY_MAP[country] || 'USA',
-          customerId: randomUUID(),
-          enrollType: 'NEW',
-          sellerNameTag,
-          // Sandbox test card — replace with real tokenized card in production
-          panData: {
-            panId: '055a183f-5506-c09e-cc81-1cf039a50c01',
-            accountNumber: 'x444111122223333',
-            expirationYear: '2028',
-            expirationMonth: '01',
-            vProvisionTokenId: '8ba8e0a913f6bb2c809e1459cdefdd02',
-          },
-        }),
+        body: reqBody,
       });
 
       const rawText = await enrollRes.text();
-      console.log('Visa Accept response', enrollRes.status, rawText.slice(0, 500));
+      console.log('Visa Accept response', enrollRes.status, rawText.slice(0, 600));
       if (!enrollRes.ok) {
         let detail = rawText;
         try {
-          const enrollData = JSON.parse(rawText);
-          const fieldErrors = (enrollData.errorMessages || []).map(e => `${e.location}: ${e.message}`).join('; ');
-          detail = `[${enrollData.reason}] ${enrollData.message}${fieldErrors ? ' — ' + fieldErrors : ''}`;
+          const d = JSON.parse(rawText);
+          // Visa Accept uses responseStatus wrapper for errors
+          const rs = d.responseStatus || d;
+          const fieldErrors = (rs.errorMessages || []).map(e => `${e.location}: ${e.message}`).join('; ');
+          detail = `[${rs.code}] ${rs.message}${fieldErrors ? ' — ' + fieldErrors : ''}`;
         } catch { /* response wasn't JSON */ }
         throw new Error(`Visa Accept ${enrollRes.status}: ${detail}`);
       }
