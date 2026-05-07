@@ -28,13 +28,21 @@ const CATEGORIES = {
   creative: { label: 'Creative / Agency',        icon: '🎨', keywords: ['Avant-Garde', 'Playful', 'Refined', 'Experimental', 'Bold'], scene: 'design studio interior, large format prints on white wall', lifestyle: 'creative team brainstorming, sketchbooks and laptops scattered', texture: 'paint strokes macro, paper grain, ink splatter abstract', mood: 'eclectic indie, playful keys, artsy studio vibes' },
 };
 
-// ─── MCP client ──────────────────────────────────────────────────────────────
+// ─── Visa CLI client (HTTP or MCP stdio) ─────────────────────────────────────
+
+const VISA_API_BASE = 'https://auth.visacli.sh';
+const VISA_CLI_VERSION = '1.15.0';
 
 async function callMcpTool(toolName, args) {
+  // On Vercel (or any env with VISA_SESSION_TOKEN), use direct HTTP — no child process needed
+  if (process.env.VISA_SESSION_TOKEN) {
+    return callVisaHttp(toolName, args);
+  }
+  // Local dev: use MCP stdio transport
   const transport = new StdioClientTransport({
     command: 'node',
     args: [MCP_SERVER],
-    env: { ...process.env, VISA_API_KEY: process.env.VISA_API_KEY },
+    env: { ...process.env },
   });
   const client = new Client({ name: 'visa-premiere', version: '1.0.0' }, { capabilities: {} });
   await client.connect(transport);
@@ -43,6 +51,22 @@ async function callMcpTool(toolName, args) {
   } finally {
     await client.close();
   }
+}
+
+async function callVisaHttp(toolName, args) {
+  const res = await fetch(`${VISA_API_BASE}/v1/batch`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.VISA_SESSION_TOKEN}`,
+      'Content-Type': 'application/json',
+      'X-Visa-CLI-Version': VISA_CLI_VERSION,
+    },
+    body: JSON.stringify({ tool: toolName, params: args }),
+  });
+  const data = await res.json();
+  if (!data.success && data.error) throw new Error(data.error);
+  // Wrap in MCP-compatible response shape so parseToolResult works unchanged
+  return { content: [{ type: 'text', text: JSON.stringify(data) }] };
 }
 
 function parseToolResult(result) {
