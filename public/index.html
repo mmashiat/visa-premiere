@@ -1275,7 +1275,6 @@ async function buildSite() {
     if (dres.ok && ddata.url) {
       state.liveUrl = ddata.url;
       state.netlifySiteId = ddata.siteId || null;
-      document.getElementById('builderStatusText').textContent = 'Live on Netlify!';
 
       document.getElementById('liveLink2').href = ddata.url;
       document.getElementById('liveLink2').textContent = ddata.url;
@@ -1288,11 +1287,24 @@ async function buildSite() {
       document.getElementById('domainCard').style.display = 'block';
       document.getElementById('editSiteBtn').style.display = 'inline-block';
       document.getElementById('acceptPaymentsBtn').style.display = 'inline-block';
+
+      // Update builder bar to green success state
+      const bar = document.querySelector('.builder-bar');
+      bar.style.background = 'var(--green-light)';
+      bar.style.borderColor = '#86efac';
+      document.getElementById('builderStatusText').innerHTML = '✓ &nbsp;Site is live!';
+      document.getElementById('builderStatusText').style.color = 'var(--green)';
+      document.getElementById('builderStatusText').style.fontWeight = '600';
+
+      // Scroll live banner into view so user can't miss it
+      document.getElementById('liveBanner2').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       document.getElementById('builderStatusText').textContent = 'Deploy failed — download below';
+      document.getElementById('builderStatusText').style.color = '#dc2626';
     }
   } catch(e) {
     document.getElementById('builderStatusText').textContent = 'Error: ' + e.message;
+    document.getElementById('builderStatusText').style.color = '#dc2626';
     document.getElementById('frameLoading').style.display = 'none';
   }
 }
@@ -1309,6 +1321,10 @@ function downloadSite() {
 function resetAll() {
   if (state.editBlobUrl) { URL.revokeObjectURL(state.editBlobUrl); }
   state = { category: null, keywords: [], moodboard: null, siteHtml: null, vibeCount: 0, liveUrl: null, audioPlaying: false, netlifySiteId: null, editBlobUrl: null };
+  const bar = document.querySelector('.builder-bar');
+  bar.style.background = ''; bar.style.borderColor = '';
+  const statusText = document.getElementById('builderStatusText');
+  statusText.style.color = ''; statusText.style.fontWeight = ''; statusText.innerHTML = 'Writing your site…';
   document.getElementById('previewAudio').pause();
   document.getElementById('previewAudio').src = '';
   document.getElementById('picker').style.display = 'block';
