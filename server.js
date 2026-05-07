@@ -501,8 +501,10 @@ app.post('/api/visa-accept/enroll', async (req, res) => {
       });
 
       const enrollData = await enrollRes.json();
+      console.log('Visa Accept response', enrollRes.status, JSON.stringify(enrollData));
       if (!enrollRes.ok) {
-        throw new Error(enrollData.message || `Visa Accept error (${enrollRes.status})`);
+        const fieldErrors = (enrollData.errorMessages || []).map(e => `${e.location}: ${e.message}`).join('; ');
+        throw new Error(`Visa Accept ${enrollRes.status} [${enrollData.reason}]: ${enrollData.message}${fieldErrors ? ' — ' + fieldErrors : ''}`);
       }
       merchantId = enrollData.sellerId;
     } else {
