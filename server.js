@@ -11,7 +11,8 @@ const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
-const MCP_SERVER = '/opt/homebrew/lib/node_modules/@visa/cli/dist/mcp-server/index.js';
+const MCP_SERVER = process.env.VISA_MCP_PATH
+  || new URL('./node_modules/@visa/cli/dist/mcp-server/index.js', import.meta.url).pathname;
 const anthropic = new Anthropic();
 
 // ─── Category definitions ────────────────────────────────────────────────────
@@ -30,7 +31,11 @@ const CATEGORIES = {
 // ─── MCP client ──────────────────────────────────────────────────────────────
 
 async function callMcpTool(toolName, args) {
-  const transport = new StdioClientTransport({ command: 'node', args: [MCP_SERVER] });
+  const transport = new StdioClientTransport({
+    command: 'node',
+    args: [MCP_SERVER],
+    env: { ...process.env, VISA_API_KEY: process.env.VISA_API_KEY },
+  });
   const client = new Client({ name: 'visa-premiere', version: '1.0.0' }, { capabilities: {} });
   await client.connect(transport);
   try {
