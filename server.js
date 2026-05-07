@@ -373,17 +373,22 @@ app.post('/api/domain/check', async (req, res) => {
     return res.status(400).json({ error: 'Invalid domain name' });
   }
   try {
-    // RDAP: 404 = not registered = available
-    const rdapRes = await fetch(`https://rdap.org/domain/${domain}`, {
-      headers: { 'Accept': 'application/rdap+json' },
-      signal: AbortSignal.timeout(8000),
+    // Cloudflare DNS-over-HTTPS: status 3 = NXDOMAIN = not registered = available.
+    // Much faster and more reliable than rdap.org from serverless environments.
+    const dnsRes = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=NS`, {
+      headers: { 'Accept': 'application/dns-json' },
+      signal: AbortSignal.timeout(5000),
     });
-    const available = rdapRes.status === 404;
+    const dns = await dnsRes.json();
+    // Status 3 = NXDOMAIN (no such domain → available)
+    // Status 0 + no Answer records → also likely available (registered but no NS yet is rare)
+    const available = dns.Status === 3 || (dns.Status === 0 && !(dns.Answer?.length));
     const tld = domain.split('.').pop();
     const PRICES = { com: 10.44, net: 10.44, org: 9.44, io: 32.99, co: 26.99, app: 14.99, dev: 12.99 };
     res.json({ available, price: PRICES[tld] ?? 14.99, currency: 'USD' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const msg = err.name === 'TimeoutError' ? 'Domain check timed out — please try again' : err.message;
+    res.status(500).json({ error: msg });
   }
 });
 
