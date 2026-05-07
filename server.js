@@ -500,12 +500,18 @@ app.post('/api/visa-accept/enroll', async (req, res) => {
         }),
       });
 
-      const enrollData = await enrollRes.json();
-      console.log('Visa Accept response', enrollRes.status, JSON.stringify(enrollData));
+      const rawText = await enrollRes.text();
+      console.log('Visa Accept response', enrollRes.status, rawText.slice(0, 500));
       if (!enrollRes.ok) {
-        const fieldErrors = (enrollData.errorMessages || []).map(e => `${e.location}: ${e.message}`).join('; ');
-        throw new Error(`Visa Accept ${enrollRes.status} [${enrollData.reason}]: ${enrollData.message}${fieldErrors ? ' — ' + fieldErrors : ''}`);
+        let detail = rawText;
+        try {
+          const enrollData = JSON.parse(rawText);
+          const fieldErrors = (enrollData.errorMessages || []).map(e => `${e.location}: ${e.message}`).join('; ');
+          detail = `[${enrollData.reason}] ${enrollData.message}${fieldErrors ? ' — ' + fieldErrors : ''}`;
+        } catch { /* response wasn't JSON */ }
+        throw new Error(`Visa Accept ${enrollRes.status}: ${detail}`);
       }
+      const enrollData = JSON.parse(rawText);
       merchantId = enrollData.sellerId;
     } else {
       // Fallback mock when env vars not configured
