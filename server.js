@@ -5,6 +5,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { randomUUID } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -459,8 +460,56 @@ function injectVisaAcceptButton(html, merchantId) {
 app.post('/api/visa-accept/enroll', async (req, res) => {
   const { brandName, businessType, country, email, siteHtml, siteId } = req.body;
   if (!siteHtml) return res.status(400).json({ error: 'siteHtml required' });
+
+  const COUNTRY_MAP = { US: 'USA', GB: 'GBR', CA: 'CAN', AU: 'AUS' };
+  const VA_API_KEY  = process.env.VISA_ACCEPT_API_KEY;
+  const VA_APP_ID   = process.env.VISA_ACCEPT_APP_ID;
+  const VA_BASE     = process.env.VISA_ACCEPT_BASE_URL || 'https://sandbox.api.visa.com';
+
   try {
-    const merchantId = `VA-${Date.now().toString(36).toUpperCase()}`;
+    let merchantId;
+
+    if (VA_API_KEY && VA_APP_ID) {
+      // Sanitize sellerNameTag: allowed chars per Visa Accept spec, max 25
+      const sellerNameTag = (brandName || 'My Store')
+        .replace(/[^\p{L}\p{N}\s~!#$%^'&()/]/gu, '')
+        .trim()
+        .slice(0, 25);
+
+      const enrollRes = await fetch(`${VA_BASE}/va/v1/apps/${VA_APP_ID}/sellers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'apikey': VA_API_KEY,
+        },
+        body: JSON.stringify({
+          locale: 'en-US',
+          country: COUNTRY_MAP[country] || 'USA',
+          customerId: randomUUID(),
+          enrollType: 'NEW',
+          sellerNameTag,
+          // Sandbox test card — replace with real tokenized card in production
+          panData: {
+            panId: '055a183f-5506-c09e-cc81-1cf039a50c01',
+            accountNumber: 'x444111122223333',
+            expirationYear: '2028',
+            expirationMonth: '01',
+            vProvisionTokenId: '8ba8e0a913f6bb2c809e1459cdefdd02',
+          },
+        }),
+      });
+
+      const enrollData = await enrollRes.json();
+      if (!enrollRes.ok) {
+        throw new Error(enrollData.message || `Visa Accept error (${enrollRes.status})`);
+      }
+      merchantId = enrollData.sellerId;
+    } else {
+      // Fallback mock when env vars not configured
+      merchantId = `VA-${Date.now().toString(36).toUpperCase()}`;
+    }
+
     const updatedHtml = injectVisaAcceptButton(siteHtml, merchantId);
     const { url, siteId: id } = await deployToNetlify(updatedHtml, brandName, siteId || null);
     res.json({ merchantId, updatedHtml, url, siteId: id });
