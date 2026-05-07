@@ -54,18 +54,28 @@ async function callMcpTool(toolName, args) {
 }
 
 async function callVisaHttp(toolName, args) {
-  const res = await fetch(`${VISA_API_BASE}/v1/batch`, {
+  // Map MCP tool names → catalog shortcut IDs
+  const TOOL_MAP = {
+    generate_image: args.tier === 'fast' ? 'fal-flux-schnell' : 'fal-flux-pro',
+    generate_music: 'suno-music',
+  };
+  const toolId = TOOL_MAP[toolName] || toolName;
+
+  // Strip MCP-specific args the catalog doesn't understand
+  const { tier, user_context, ...params } = args;
+
+  const res = await fetch(`${VISA_API_BASE}/v1/shortcuts/${toolId}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.VISA_SESSION_TOKEN}`,
       'Content-Type': 'application/json',
       'X-Visa-CLI-Version': VISA_CLI_VERSION,
     },
-    body: JSON.stringify({ tool: toolName, params: args }),
+    body: JSON.stringify({ ...params, user_context: user_context || toolName }),
   });
   const data = await res.json();
   if (!data.success && data.error) throw new Error(data.error);
-  // Wrap in MCP-compatible response shape so parseToolResult works unchanged
+  // Wrap in MCP-compatible shape so parseToolResult + extractUrl work unchanged
   return { content: [{ type: 'text', text: JSON.stringify(data) }] };
 }
 
