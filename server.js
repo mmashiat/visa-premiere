@@ -98,7 +98,7 @@ const ABOUT_CONTEXT = {
 function sitePrompt({ cat, categoryKey, keywords, brandName, heroUrl, lifestyleUrl, textureUrl, colors }) {
   const vibe = keywords.join(', ');
   const brand = brandName || 'Our Brand';
-  const colorVars = colors.map((c, i) => `  --color-${i + 1}: ${c};`).join('\n');
+  const colorVars = (colors || []).map((c, i) => `  --color-${i + 1}: ${c};`).join('\n');
   const shop = SHOP_CONTEXT[categoryKey] || SHOP_CONTEXT.fashion;
   const aboutCtx = ABOUT_CONTEXT[categoryKey] || 'brand with a clear point of view';
 
@@ -122,7 +122,7 @@ BRAND COLOR PALETTE
 :root {
 ${colorVars}
 }
-Primary: ${colors[0]}   Accent: ${colors[1] || colors[0]}
+${colors?.length ? `Primary: ${colors[0]}   Accent: ${colors[1] || colors[0]}` : ''}
 
 REQUIRED SECTIONS
 -----------
@@ -148,11 +148,18 @@ TECHNICAL REQUIREMENTS
 - Fully responsive, mobile-first, zero external dependencies (no CDN links except the one Google Font @import)
 - One Google Font @import that matches the ${vibe} aesthetic
 - CSS custom properties for all colors
-- smooth-scroll, IntersectionObserver fade-ins on scroll
+- smooth-scroll on anchor links
+- IntersectionObserver fade-ins are optional — if used, ALL sections must be visible by default (opacity:1, transform:none) so content shows even if JS fails
 - Product/service cards: image accent, name, price, CTA button with hover state
 - Mobile nav hamburger menu
 - All images: loading="lazy", meaningful alt text
 - Design must feel like a real ${cat.label} brand site — not a template. Match the ${vibe} energy in every detail
+
+JAVASCRIPT RULES (critical)
+-----------
+- Wrap ALL JavaScript in a single IIFE: (function() { ... })(); — no variables or functions at the top level
+- This prevents SyntaxError crashes from duplicate identifiers
+- Keep JS minimal — only nav toggle and smooth scroll are required
 
 CSS EFFICIENCY (critical — output has a token budget)
 -----------
@@ -169,7 +176,7 @@ CSS EFFICIENCY (critical — output has a token budget)
 app.post('/api/moodboard', async (req, res) => {
   const { category, keywords, brandName } = req.body;
   const cat = CATEGORIES[category];
-  if (!cat || !keywords?.length) return res.status(400).json({ error: 'Invalid request' });
+  if (!cat) return res.status(400).json({ error: 'Invalid request' });
 
   const vibe = keywords.join(', ');
   const brand = brandName?.trim() || 'the brand';
@@ -249,9 +256,10 @@ app.post('/api/deploy', async (req, res) => {
   if (!html) return res.status(400).json({ error: 'No HTML provided' });
 
   try {
-    // Create zip with index.html
+    // Create zip with index.html + _headers to force correct MIME type
     const zip = new AdmZip();
     zip.addFile('index.html', Buffer.from(html, 'utf8'));
+    zip.addFile('_headers', Buffer.from('/*\n  Content-Type: text/html; charset=UTF-8\n', 'utf8'));
     const zipBuffer = zip.toBuffer();
 
     // Create a new Netlify site
@@ -271,8 +279,9 @@ app.post('/api/deploy', async (req, res) => {
       body: zipBuffer,
     });
     const deploy = await deployRes.json();
-    const url = deploy.deploy_url || deploy.url || site.url;
-    if (!url) throw new Error(deploy.message || 'Deploy failed');
+    const rawUrl = deploy.deploy_url || deploy.url || site.url;
+    if (!rawUrl) throw new Error(deploy.message || 'Deploy failed');
+    const url = rawUrl.replace(/^http:\/\//, 'https://');
 
     res.json({ url });
   } catch (err) {
