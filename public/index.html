@@ -644,6 +644,116 @@
       text-shadow: 0 1px 8px rgba(0,0,0,0.4);
     }
 
+    /* Domain card */
+    .domain-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      display: none;
+    }
+    .domain-card-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 12px; }
+    .domain-input-row { display: flex; gap: 8px; }
+    .domain-input {
+      flex: 1; border: 1px solid var(--border-strong); border-radius: 8px;
+      padding: 8px 12px; font-size: 0.875rem; font-family: inherit;
+      background: var(--bg); color: var(--text); outline: none;
+    }
+    .domain-input:focus { border-color: var(--accent); }
+    .btn-check {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background 0.15s;
+    }
+    .btn-check:hover { background: var(--accent-hover); }
+    .domain-result { margin-top: 12px; display: none; }
+    .domain-available { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .domain-price-badge {
+      background: var(--green-light); color: var(--green);
+      padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    }
+    .domain-taken { color: #dc2626; font-size: 0.875rem; }
+    .btn-buy {
+      background: #1a1f71; color: #fff; border: none; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.15s;
+    }
+    .btn-buy:hover { opacity: 0.85; }
+    .btn-buy:disabled { opacity: 0.5; cursor: not-allowed; }
+    .domain-steps { display: none; gap: 0; margin-top: 14px; }
+    .domain-step {
+      flex: 1; text-align: center; padding: 8px 4px;
+      font-size: 0.75rem; color: var(--text-secondary);
+      border-bottom: 2px solid var(--border);
+    }
+    .domain-step.active { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+    .domain-step.done { color: var(--green); border-color: var(--green); }
+    .domain-live-banner {
+      display: none; background: var(--green-light); border: 1px solid #86efac;
+      border-radius: 10px; padding: 14px 18px; margin-bottom: 10px;
+      align-items: center; gap: 10px;
+    }
+
+    /* Edit toolbar */
+    .edit-toolbar {
+      display: none; background: var(--accent-light); border: 1px solid #c7d2fe;
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;
+      align-items: center; gap: 8px; box-shadow: var(--shadow-sm);
+    }
+    .edit-hint { font-size: 0.8rem; color: var(--accent); flex: 1; font-weight: 500; }
+    .btn-save-edit {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 6px 14px; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-cancel-edit {
+      background: none; border: 1px solid var(--border-strong); border-radius: 8px;
+      padding: 6px 12px; font-size: 0.8rem; cursor: pointer;
+      font-family: inherit; color: var(--text-secondary);
+    }
+
+    /* Visa Accept overlay */
+    .va-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.45); backdrop-filter: blur(3px);
+      align-items: flex-end; justify-content: center;
+    }
+    .va-overlay.open { display: flex; }
+    .va-panel {
+      background: var(--surface); border-radius: 20px 20px 0 0;
+      padding: 32px 28px 48px; width: 100%; max-width: 540px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
+    }
+    .va-panel-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+    .va-panel-sub { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 22px; }
+    .va-form-grid { display: flex; flex-direction: column; gap: 14px; }
+    .va-field label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 5px; }
+    .va-field input, .va-field select {
+      width: 100%; border: 1px solid var(--border-strong); border-radius: 8px;
+      padding: 10px 12px; font-size: 0.875rem; font-family: inherit;
+      background: var(--bg); color: var(--text); outline: none;
+    }
+    .va-field input:focus, .va-field select:focus { border-color: var(--accent); }
+    .va-terms { display: flex; align-items: flex-start; gap: 10px; font-size: 0.8rem; color: var(--text-secondary); }
+    .va-terms input[type=checkbox] { width: auto; margin-top: 2px; accent-color: var(--accent); }
+    .btn-enroll {
+      background: #1a1f71; color: #fff; border: none; border-radius: 10px;
+      padding: 14px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit; width: 100%; margin-top: 4px;
+    }
+    .btn-enroll:disabled { opacity: 0.5; cursor: not-allowed; }
+    .va-success { display: none; text-align: center; padding: 24px 0; }
+    .va-merchant-id {
+      font-family: monospace; background: var(--bg); border: 1px solid var(--border);
+      padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; margin: 14px 0;
+    }
+
+    /* Builder bar button group */
+    .builder-actions { display: flex; gap: 6px; align-items: center; }
+
     /* Responsive */
     @media (max-width: 520px) {
       .hero h1 { font-size: 2.2rem; }
@@ -816,13 +926,56 @@
     <div class="live-text">Your site is live!</div>
     <a href="#" class="live-link" id="liveLink2" target="_blank">Open site ↗</a>
   </div>
+
+  <!-- Domain card -->
+  <div class="domain-card" id="domainCard">
+    <div class="domain-card-title">Get a custom domain</div>
+    <div class="domain-input-row">
+      <input type="text" class="domain-input" id="domainInput" placeholder="yourbrand.com" />
+      <button class="btn-check" onclick="checkDomain()">Check</button>
+    </div>
+    <div class="domain-result" id="domainResult">
+      <div class="domain-available" id="domainAvailable">
+        <span id="domainAvailText" style="font-size:.875rem;color:var(--green);font-weight:500"></span>
+        <span class="domain-price-badge" id="domainPriceBadge"></span>
+        <button class="btn-buy" id="buyDomainBtn" onclick="purchaseDomain()">
+          <svg width="32" height="11" viewBox="0 0 40 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16.5.5L13 13.5H9.5L13 .5H16.5ZM30 .5l-3 8-1-3L23.5.5H19.5L24 13.5H27.5L33.5.5H30ZM7.5.5L4 9l-.5-2.5C2.5 4 .5 1.5.5 1.5L3.5 13.5H7L11 .5H7.5ZM39.5 13.5H36.5L38.5.5H41.5L39.5 13.5Z" fill="white"/></svg>
+          Buy with Visa
+        </button>
+      </div>
+      <div class="domain-taken" id="domainTaken" style="display:none">That domain is already taken.</div>
+    </div>
+    <div class="domain-steps" id="domainSteps">
+      <div class="domain-step" id="step-pay">Paying</div>
+      <div class="domain-step" id="step-reg">Registering</div>
+      <div class="domain-step" id="step-dns">DNS</div>
+      <div class="domain-step" id="step-done">Live</div>
+    </div>
+  </div>
+  <div class="domain-live-banner" id="domainLiveBanner">
+    <div class="live-dot"></div>
+    <div class="live-text">Domain live!</div>
+    <a href="#" class="live-link" id="domainLiveLink" target="_blank"></a>
+  </div>
+
   <div class="builder-bar">
     <div class="builder-status" id="builderStatus">
       <div class="spin" id="builderSpin"></div>
       <span id="builderStatusText">Writing your site…</span>
     </div>
-    <button class="btn-download" id="downloadBtn" onclick="downloadSite()">↓ Download HTML</button>
+    <div class="builder-actions">
+      <button class="btn-download" id="editSiteBtn" onclick="enterEditMode()" style="display:none">✏ Edit</button>
+      <button class="btn-download" id="acceptPaymentsBtn" onclick="openVisaAccept()" style="display:none">Accept Payments</button>
+      <button class="btn-download" id="downloadBtn" onclick="downloadSite()">↓ Download HTML</button>
+    </div>
   </div>
+
+  <div class="edit-toolbar" id="editToolbar">
+    <span class="edit-hint">Click any text to edit it in place</span>
+    <button class="btn-cancel-edit" onclick="cancelEditMode()">Cancel</button>
+    <button class="btn-save-edit" onclick="saveEditMode()">Save &amp; Redeploy</button>
+  </div>
+
   <div class="preview-frame-wrap">
     <div class="preview-frame-bar">
       <div class="frame-dot frame-dot-r"></div>
@@ -884,6 +1037,8 @@ let state = {
   vibeCount: 0,
   liveUrl: null,
   audioPlaying: false,
+  netlifySiteId: null,
+  editBlobUrl: null,
 };
 
 function pickCategory(el) {
@@ -1119,6 +1274,7 @@ async function buildSite() {
     const ddata = await dres.json();
     if (dres.ok && ddata.url) {
       state.liveUrl = ddata.url;
+      state.netlifySiteId = ddata.siteId || null;
       document.getElementById('builderStatusText').textContent = 'Live on Netlify!';
 
       document.getElementById('liveLink2').href = ddata.url;
@@ -1128,6 +1284,10 @@ async function buildSite() {
       document.getElementById('liveLink').href = ddata.url;
       document.getElementById('liveLink').textContent = ddata.url;
       document.getElementById('liveBanner').style.display = 'flex';
+
+      document.getElementById('domainCard').style.display = 'block';
+      document.getElementById('editSiteBtn').style.display = 'inline-block';
+      document.getElementById('acceptPaymentsBtn').style.display = 'inline-block';
     } else {
       document.getElementById('builderStatusText').textContent = 'Deploy failed — download below';
     }
@@ -1147,7 +1307,8 @@ function downloadSite() {
 }
 
 function resetAll() {
-  state = { category: null, keywords: [], moodboard: null, siteHtml: null, vibeCount: 0, liveUrl: null, audioPlaying: false };
+  if (state.editBlobUrl) { URL.revokeObjectURL(state.editBlobUrl); }
+  state = { category: null, keywords: [], moodboard: null, siteHtml: null, vibeCount: 0, liveUrl: null, audioPlaying: false, netlifySiteId: null, editBlobUrl: null };
   document.getElementById('previewAudio').pause();
   document.getElementById('previewAudio').src = '';
   document.getElementById('picker').style.display = 'block';
@@ -1160,9 +1321,291 @@ function resetAll() {
   document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'));
   renderKeywords();
   updateGenerateBtn();
+  document.getElementById('domainCard').style.display = 'none';
+  document.getElementById('domainLiveBanner').style.display = 'none';
+  document.getElementById('editToolbar').style.display = 'none';
+  document.getElementById('editSiteBtn').style.display = 'none';
+  document.getElementById('acceptPaymentsBtn').style.display = 'none';
+  document.getElementById('domainResult').style.display = 'none';
+  document.getElementById('domainSteps').style.display = 'none';
+}
+
+// ── Domain check ──────────────────────────────────────────────────────────────
+
+async function checkDomain() {
+  const raw = document.getElementById('domainInput').value.trim().toLowerCase().replace(/^https?:\/\//, '');
+  if (!raw) return;
+  const btn = document.querySelector('.btn-check');
+  btn.disabled = true; btn.textContent = '…';
+  document.getElementById('domainResult').style.display = 'none';
+  document.getElementById('domainSteps').style.display = 'none';
+  try {
+    const res = await fetch('/api/domain/check', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain: raw }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    document.getElementById('domainResult').style.display = 'block';
+    if (data.available) {
+      document.getElementById('domainAvailable').style.display = 'flex';
+      document.getElementById('domainTaken').style.display = 'none';
+      document.getElementById('domainAvailText').textContent = raw + ' is available';
+      document.getElementById('domainPriceBadge').textContent = `$${data.price.toFixed(2)}/yr`;
+      document.getElementById('buyDomainBtn').dataset.price = data.price;
+      document.getElementById('buyDomainBtn').dataset.domain = raw;
+    } else {
+      document.getElementById('domainAvailable').style.display = 'none';
+      document.getElementById('domainTaken').style.display = 'block';
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Check';
+  }
+}
+
+// ── Domain purchase ───────────────────────────────────────────────────────────
+
+async function purchaseDomain() {
+  const domain = document.getElementById('buyDomainBtn').dataset.domain;
+  const price = parseFloat(document.getElementById('buyDomainBtn').dataset.price);
+  document.getElementById('domainResult').style.display = 'none';
+  document.getElementById('domainSteps').style.display = 'flex';
+  document.getElementById('buyDomainBtn').disabled = true;
+
+  const stepIds = ['pay', 'reg', 'dns', 'done'];
+  const setStep = (i) => stepIds.forEach((s, j) => {
+    document.getElementById(`step-${s}`).className = 'domain-step' + (j < i ? ' done' : j === i ? ' active' : '');
+  });
+  setStep(0);
+
+  try {
+    const [res] = await Promise.all([
+      fetch('/api/domain/purchase', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain, netlifyUrl: state.liveUrl, netlifySiteId: state.netlifySiteId, price }),
+      }),
+      (async () => {
+        await new Promise(r => setTimeout(r, 1800)); setStep(1);
+        await new Promise(r => setTimeout(r, 2200)); setStep(2);
+        await new Promise(r => setTimeout(r, 2000)); setStep(3);
+      })(),
+    ]);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    state.customDomain = data.domain;
+    setTimeout(() => {
+      document.getElementById('domainSteps').style.display = 'none';
+      document.getElementById('domainCard').style.display = 'none';
+      document.getElementById('domainLiveBanner').style.display = 'flex';
+      document.getElementById('domainLiveLink').href = data.liveUrl;
+      document.getElementById('domainLiveLink').textContent = data.liveUrl;
+    }, 600);
+  } catch(e) {
+    document.getElementById('domainSteps').style.display = 'none';
+    document.getElementById('domainResult').style.display = 'block';
+    document.getElementById('buyDomainBtn').disabled = false;
+    alert('Purchase failed: ' + e.message);
+  }
+}
+
+// ── Edit mode ─────────────────────────────────────────────────────────────────
+
+function enterEditMode() {
+  if (!state.siteHtml) return;
+  const frame = document.getElementById('siteFrame');
+  if (state.editBlobUrl) URL.revokeObjectURL(state.editBlobUrl);
+  state.editBlobUrl = URL.createObjectURL(new Blob([state.siteHtml], { type: 'text/html' }));
+  frame.src = state.editBlobUrl;
+  frame.onload = () => {
+    const doc = frame.contentDocument;
+    const style = doc.createElement('style');
+    style.id = 'visa-edit-style';
+    style.textContent = '[contenteditable]:focus{outline:2px dashed #3730a3!important;background:rgba(55,48,163,.04)!important;border-radius:2px;}[contenteditable]{cursor:text;}';
+    doc.head.appendChild(style);
+    doc.querySelectorAll('h1,h2,h3,p').forEach(el => {
+      if (!el.closest('nav') && !el.querySelector('img,audio,button,input,select')) {
+        el.setAttribute('contenteditable', 'true');
+        el.setAttribute('spellcheck', 'false');
+      }
+    });
+    frame.onload = null;
+  };
+  document.getElementById('editToolbar').style.display = 'flex';
+  document.getElementById('editSiteBtn').style.display = 'none';
+  document.getElementById('acceptPaymentsBtn').style.display = 'none';
+}
+
+function cancelEditMode() {
+  const frame = document.getElementById('siteFrame');
+  if (state.editBlobUrl) { URL.revokeObjectURL(state.editBlobUrl); state.editBlobUrl = null; }
+  frame.src = 'about:blank';
+  setTimeout(() => {
+    const doc = frame.contentDocument;
+    doc.open(); doc.write(state.siteHtml); doc.close();
+  }, 50);
+  document.getElementById('editToolbar').style.display = 'none';
+  document.getElementById('editSiteBtn').style.display = 'inline-block';
+  document.getElementById('acceptPaymentsBtn').style.display = 'inline-block';
+}
+
+async function saveEditMode() {
+  const frame = document.getElementById('siteFrame');
+  const doc = frame.contentDocument;
+  const editStyle = doc.getElementById('visa-edit-style');
+  if (editStyle) editStyle.remove();
+  doc.querySelectorAll('[contenteditable]').forEach(el => {
+    el.removeAttribute('contenteditable'); el.removeAttribute('spellcheck');
+  });
+  const updatedHtml = '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+  state.siteHtml = updatedHtml;
+  if (state.editBlobUrl) { URL.revokeObjectURL(state.editBlobUrl); state.editBlobUrl = null; }
+  document.getElementById('editToolbar').style.display = 'none';
+  document.getElementById('builderSpin').style.display = 'block';
+  document.getElementById('builderStatusText').textContent = 'Saving changes…';
+  try {
+    const brandName = document.getElementById('brandName').value.trim();
+    const res = await fetch('/api/redeploy', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html: updatedHtml, brandName, siteId: state.netlifySiteId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    state.liveUrl = data.url;
+    if (data.siteId) state.netlifySiteId = data.siteId;
+    frame.src = data.url;
+    document.getElementById('liveLink2').href = data.url;
+    document.getElementById('liveLink2').textContent = data.url;
+    document.getElementById('liveLink').href = data.url;
+    document.getElementById('liveLink').textContent = data.url;
+    document.getElementById('builderSpin').style.display = 'none';
+    document.getElementById('builderStatusText').textContent = 'Changes saved!';
+    document.getElementById('editSiteBtn').style.display = 'inline-block';
+    document.getElementById('acceptPaymentsBtn').style.display = 'inline-block';
+  } catch(e) {
+    document.getElementById('builderSpin').style.display = 'none';
+    document.getElementById('builderStatusText').textContent = 'Save failed: ' + e.message;
+    document.getElementById('editSiteBtn').style.display = 'inline-block';
+    document.getElementById('acceptPaymentsBtn').style.display = 'inline-block';
+  }
+}
+
+// ── Visa Accept ───────────────────────────────────────────────────────────────
+
+function openVisaAccept() {
+  document.getElementById('vaBusinessName').value = document.getElementById('brandName').value.trim();
+  document.getElementById('vaEmail').value = '';
+  document.getElementById('vaTerms').checked = false;
+  document.getElementById('enrollBtn').disabled = false;
+  document.getElementById('enrollBtn').textContent = 'Enroll as Visa Merchant';
+  document.getElementById('vaFormSection').style.display = 'block';
+  document.getElementById('vaSuccess').style.display = 'none';
+  document.getElementById('vaOverlay').classList.add('open');
+}
+
+function closeVisaAccept(e) {
+  if (e.target === document.getElementById('vaOverlay')) {
+    document.getElementById('vaOverlay').classList.remove('open');
+  }
+}
+
+async function submitEnrollment() {
+  const businessName = document.getElementById('vaBusinessName').value.trim();
+  const email = document.getElementById('vaEmail').value.trim();
+  const terms = document.getElementById('vaTerms').checked;
+  if (!businessName || !email || !terms) { alert('Please fill in all fields and accept the terms.'); return; }
+  const btn = document.getElementById('enrollBtn');
+  btn.disabled = true; btn.textContent = 'Enrolling…';
+  try {
+    const res = await fetch('/api/visa-accept/enroll', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        brandName: businessName,
+        businessType: document.getElementById('vaBusinessType').value,
+        country: document.getElementById('vaCountry').value,
+        email,
+        siteHtml: state.siteHtml,
+        siteId: state.netlifySiteId,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    state.siteHtml = data.updatedHtml;
+    state.liveUrl = data.url;
+    if (data.siteId) state.netlifySiteId = data.siteId;
+    document.getElementById('liveLink2').href = data.url;
+    document.getElementById('liveLink2').textContent = data.url;
+    document.getElementById('liveLink').href = data.url;
+    document.getElementById('liveLink').textContent = data.url;
+    const frame = document.getElementById('siteFrame');
+    const doc = frame.contentDocument;
+    doc.open(); doc.write(data.updatedHtml); doc.close();
+    document.getElementById('vaFormSection').style.display = 'none';
+    document.getElementById('vaSuccess').style.display = 'block';
+    document.getElementById('vaMerchantId').textContent = data.merchantId;
+    document.getElementById('vaNewLiveLink').href = data.url;
+    document.getElementById('vaNewLiveLink').textContent = data.url;
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Enroll as Visa Merchant';
+    alert('Enrollment failed: ' + e.message);
+  }
 }
 
 buildCarousel();
 </script>
+
+<!-- Visa Accept enrollment panel -->
+<div class="va-overlay" id="vaOverlay" onclick="closeVisaAccept(event)">
+  <div class="va-panel">
+    <div id="vaFormSection">
+      <div class="va-panel-title">Accept Payments</div>
+      <div class="va-panel-sub">Enroll as a Visa merchant and add a Pay with Visa button to your site.</div>
+      <div class="va-form-grid">
+        <div class="va-field">
+          <label>Business name</label>
+          <input type="text" id="vaBusinessName" />
+        </div>
+        <div style="display:flex;gap:12px">
+          <div class="va-field" style="flex:1">
+            <label>Business type</label>
+            <select id="vaBusinessType">
+              <option value="retail">Retail</option>
+              <option value="food">Food &amp; Beverage</option>
+              <option value="services">Services</option>
+              <option value="digital">Digital / SaaS</option>
+            </select>
+          </div>
+          <div class="va-field" style="flex:1">
+            <label>Country</label>
+            <select id="vaCountry">
+              <option value="US">United States</option>
+              <option value="GB">United Kingdom</option>
+              <option value="CA">Canada</option>
+              <option value="AU">Australia</option>
+            </select>
+          </div>
+        </div>
+        <div class="va-field">
+          <label>Email</label>
+          <input type="email" id="vaEmail" />
+        </div>
+        <div class="va-terms">
+          <input type="checkbox" id="vaTerms" />
+          <label for="vaTerms">I agree to the Visa merchant terms and conditions</label>
+        </div>
+        <button class="btn-enroll" id="enrollBtn" onclick="submitEnrollment()">Enroll as Visa Merchant</button>
+      </div>
+    </div>
+    <div class="va-success" id="vaSuccess">
+      <div style="font-size:2.5rem;margin-bottom:12px;color:var(--green)">✓</div>
+      <div style="font-weight:700;font-size:1.1rem">You're enrolled!</div>
+      <div class="va-merchant-id" id="vaMerchantId"></div>
+      <div style="font-size:.85rem;color:var(--text-secondary)">A Pay with Visa button has been added to your site.</div>
+      <a id="vaNewLiveLink" href="#" target="_blank" style="display:inline-block;margin-top:16px;color:var(--accent);font-size:.875rem;font-weight:600">View updated site ↗</a>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

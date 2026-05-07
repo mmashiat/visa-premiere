@@ -288,41 +288,166 @@ app.post('/api/buildsite', async (req, res) => {
   }
 });
 
-app.post('/api/deploy', async (req, res) => {
-  const { html, brandName } = req.body;
+// ─── Netlify deploy helper ────────────────────────────────────────────────────
+
+async function deployToNetlify(html, brandName, siteId = null) {
   const token = process.env.NETLIFY_TOKEN;
-  if (!token) return res.status(400).json({ error: 'NETLIFY_TOKEN not set' });
-  if (!html) return res.status(400).json({ error: 'No HTML provided' });
+  if (!token) throw new Error('NETLIFY_TOKEN not set');
 
-  try {
-    // Create zip with index.html + _headers to force correct MIME type
-    const zip = new AdmZip();
-    zip.addFile('index.html', Buffer.from(html, 'utf8'));
-    zip.addFile('_headers', Buffer.from('/*\n  Content-Type: text/html; charset=UTF-8\n', 'utf8'));
-    const zipBuffer = zip.toBuffer();
+  const zip = new AdmZip();
+  zip.addFile('index.html', Buffer.from(html, 'utf8'));
+  zip.addFile('_headers', Buffer.from('/*\n  Content-Type: text/html; charset=UTF-8\n', 'utf8'));
+  const zipBuffer = zip.toBuffer();
 
-    // Create a new Netlify site
-    const slug = (brandName || 'my-brand').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30);
-    const siteRes = await fetch('https://api.netlify.com/api/v1/sites', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: `${slug}-${Date.now()}` }),
-    });
-    const site = await siteRes.json();
-    if (!site.id) throw new Error(site.message || 'Failed to create Netlify site');
-
-    // Deploy the zip
-    const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
+  if (siteId) {
+    const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/deploys`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/zip' },
       body: zipBuffer,
     });
     const deploy = await deployRes.json();
-    const rawUrl = deploy.deploy_url || deploy.url || site.url;
-    if (!rawUrl) throw new Error(deploy.message || 'Deploy failed');
-    const url = rawUrl.replace(/^http:\/\//, 'https://');
+    const rawUrl = deploy.deploy_url || deploy.url;
+    if (!rawUrl) throw new Error(deploy.message || 'Redeploy failed');
+    return { url: rawUrl.replace(/^http:\/\//, 'https://'), siteId };
+  }
 
-    res.json({ url });
+  const slug = (brandName || 'my-brand').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30);
+  const siteRes = await fetch('https://api.netlify.com/api/v1/sites', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: `${slug}-${Date.now()}` }),
+  });
+  const site = await siteRes.json();
+  if (!site.id) throw new Error(site.message || 'Failed to create Netlify site');
+
+  const deployRes = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/deploys`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/zip' },
+    body: zipBuffer,
+  });
+  const deploy = await deployRes.json();
+  const rawUrl = deploy.deploy_url || deploy.url || site.url;
+  if (!rawUrl) throw new Error(deploy.message || 'Deploy failed');
+  return { url: rawUrl.replace(/^http:\/\//, 'https://'), siteId: site.id };
+}
+
+app.post('/api/deploy', async (req, res) => {
+  const { html, brandName } = req.body;
+  if (!html) return res.status(400).json({ error: 'No HTML provided' });
+  try {
+    const { url, siteId } = await deployToNetlify(html, brandName);
+    res.json({ url, siteId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/redeploy', async (req, res) => {
+  const { html, brandName, siteId } = req.body;
+  if (!html) return res.status(400).json({ error: 'No HTML provided' });
+  try {
+    const result = await deployToNetlify(html, brandName, siteId || null);
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/domain/check', async (req, res) => {
+  let { domain } = req.body;
+  domain = (domain || '').trim().toLowerCase().replace(/^https?:\/\//, '');
+  if (!domain || !/^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z]{2,})+$/.test(domain)) {
+    return res.status(400).json({ error: 'Invalid domain name' });
+  }
+  try {
+    // RDAP: 404 = not registered = available
+    const rdapRes = await fetch(`https://rdap.org/domain/${domain}`, {
+      headers: { 'Accept': 'application/rdap+json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const available = rdapRes.status === 404;
+    const tld = domain.split('.').pop();
+    const PRICES = { com: 10.44, net: 10.44, org: 9.44, io: 32.99, co: 26.99, app: 14.99, dev: 12.99 };
+    res.json({ available, price: PRICES[tld] ?? 14.99, currency: 'USD' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/domain/purchase', async (req, res) => {
+  const { domain, netlifyUrl, netlifySiteId, price } = req.body;
+  const cfToken = process.env.CLOUDFLARE_API_TOKEN;
+  const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+  if (!cfToken || !cfAccountId) {
+    return res.status(400).json({ error: 'CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are required' });
+  }
+  try {
+    // 1. Charge via Visa CLI
+    await callMcpTool('pay', { amount: price, description: `Domain: ${domain}` });
+
+    // 2. Register domain via Cloudflare Registrar
+    const regRes = await fetch(`https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/registrar/domains`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: domain, years: 1 }),
+    });
+    const regData = await regRes.json();
+    if (!regData.success) throw new Error(regData.errors?.[0]?.message || 'Domain registration failed');
+
+    // 3. Create Cloudflare DNS zone
+    const zoneRes = await fetch('https://api.cloudflare.com/client/v4/zones', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: domain, account: { id: cfAccountId }, jump_start: false }),
+    });
+    const zoneData = await zoneRes.json();
+    if (!zoneData.success) throw new Error(zoneData.errors?.[0]?.message || 'Zone creation failed');
+    const zoneId = zoneData.result.id;
+
+    // 4. CNAME → Netlify URL
+    const netlifyHost = (netlifyUrl || '').replace(/^https?:\/\//, '');
+    await fetch(`https://api.cloudflare.com/client/v4/zones/${zoneId}/dns_records`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${cfToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'CNAME', name: '@', content: netlifyHost, proxied: true }),
+    });
+
+    // 5. Attach custom domain to Netlify site
+    if (netlifySiteId && process.env.NETLIFY_TOKEN) {
+      await fetch(`https://api.netlify.com/api/v1/sites/${netlifySiteId}/domains`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.NETLIFY_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain }),
+      });
+    }
+
+    res.json({ success: true, domain, liveUrl: `https://${domain}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function injectVisaAcceptButton(html, merchantId) {
+  const button = `<div class="visa-accept-wrap" style="margin-top:2rem;text-align:center;">
+  <button class="visa-pay-btn" data-merchant-id="${merchantId}" style="background:#1a1f71;color:#fff;padding:.875rem 2.5rem;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;letter-spacing:.01em;">Pay with Visa</button>
+</div>`;
+  if (html.includes('id="shop"')) {
+    return html.replace(/(<section[^>]*id="shop"[^>]*>[\s\S]*?)(<\/section>)/, (_, body, close) => body + button + close);
+  }
+  return html.replace('</body>', button + '\n</body>');
+}
+
+app.post('/api/visa-accept/enroll', async (req, res) => {
+  const { brandName, businessType, country, email, siteHtml, siteId } = req.body;
+  if (!siteHtml) return res.status(400).json({ error: 'siteHtml required' });
+  try {
+    const merchantId = `VA-${Date.now().toString(36).toUpperCase()}`;
+    const updatedHtml = injectVisaAcceptButton(siteHtml, merchantId);
+    const { url, siteId: id } = await deployToNetlify(updatedHtml, brandName, siteId || null);
+    res.json({ merchantId, updatedHtml, url, siteId: id });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
